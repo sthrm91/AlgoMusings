@@ -5,9 +5,9 @@ import java.util.List;
 public class FSMImplementation 
 {
     enum State {printing, beforeComment, afterComment, comment};
-	/*
-	 * Given a list of Strings, prints the uncommented part 
-	 */
+    /*
+     * Given a list of Strings, prints the uncommented part 
+     */
     public static void getUncommentedPart(List<String> lines)
     {
         State currentState = State.printing, previousState = State.printing;

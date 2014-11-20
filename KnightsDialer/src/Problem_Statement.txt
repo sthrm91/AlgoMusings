@@ -1,0 +1,21 @@
+Problem Statement:
+
+Knights Dialer problem:
+-----------------------
+
+Find the number of 30 digit phone numbers that could be dialled using a normal keypad by following the below conditions:
+
+1. All the numbers start with 1
+2. From any number the next number should be in knights position. ex: from 1 --> only 6,8 are the potential next digits.
+
+  1   2   3
+  4   5   6
+  7   8   9
+  *   0   #
+
+
+Solution:
+---------
+
+1. It might seem like there is only exponential solution. But we should remeber that we do not want to list the phone numbers, just count them.
+2. There is an interesting O(D) solution where D is the number of digits in the phone number.

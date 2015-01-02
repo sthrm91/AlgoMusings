@@ -1,0 +1,170 @@
+Script input and output :
+-------------------------
+
+Input: train and test folders containing samples corresponding to 10 fold cross validation.
+Dependencies: weka.jar, Installed and working JDK and most importantly python 2.7
+output: classification accuracies of Naive Bayes, KNN (k=1,k=5,k=10), J48 and SMO after doing feature selection using each of [SU, ChiSquared, InfoGain, SVM-RFE ]
+
+How to run:
+----------
+
+1. Separate train and test files and put them into train and test folder respectively.
+
+2. Lets call this as parent folder. It now contains train and test folder.
+
+3. Download weka library and extract weka.jar and put it into the parent folder.
+   link to download : http://downloads.sourceforge.net/project/weka/weka-3-6/3.6.10/weka-3-6-10.zip?r=http%3A%2F%2Fwww.cs.waikato.ac.nz%2Fml%2Fweka%2Fdownloading.html&ts=1394477152&use_mirror=iweb
+   version used: 3.6.10
+
+4. Also put the FileNewScript.py file into the parent directory.
+
+5. Now your parent directory should expand like this:
+   Parent  
+   |-------train
+   |-------test
+   |-------weka.jar
+   |-------FileNewScript.py
+
+6. Finally launch this command in the terminal with current directory as parent: python FileNewScript.py
+
+Description:
+------------
+
+Environment variables:
+-----------------------
+
+workingDirectory="./" ---  sets the folder path where train and test folders reside. 
+outputDirectory=workingDirectory+"processed/" --- sets the folder path for feature reduced training samples
+arffOutputDirectory=workingDirectory+"arff_train/" --- sets the output folder path for weka compatible train files 
+testDirectory=workingDirectory+"processed_test/" --- sets the folder path for feature reduced - weka compatible test files
+
+Procedures:
+-----------
+
+1.  ArffConv(inpFilename) --- procedure to convert dihong's file format to weka compatible format
+#input:  filename within train directory.
+#output: weka compatible file placed in arffOutputDirectory with name inpFilename.arff
+
+To test it: initialize the run the environment variable section and call ArffConv("1.train"). 
+            open the file generated in weka explorer. If it opens successfully then the conversion is successful.
+ 
+
+2.  featureSelection(feature) --- Given a featureSelection algorithm reduces all the training files in arffOutputDirectory to weka compatible format
+
+#input parameter description: 
+
+feature=0: mode="SU"
+feature=1: mode="ChiSquared"
+feature=2: mode="InfoGain"
+Otherwise: mode="SVM-RFE"
+ 
+#Output: All weka compatible training files in arffOutputDirectory will be reduced using the algorithm chosen and placed in processed folder with "_reduced" appended to each and every file name.
+
+#To test it: initialize the run the environment variable section and global variable lis as 
+            >>>import os
+            >>>lis=os.listdir(workingDirectory+"train/")
+            >>>lis.sort()
+            >>>select=1  ### set your desired selection algorithm
+            >>>featureSelection(select) 
+            
+	    Check the processed folder to find their corresponding reduced files.
+
+#How to add new feature algorithm:
+
+insert new condition in the if block
+
+elif feature==<new value>:
+        cmd="""java -cp weka.jar weka.filters.supervised.attribute.AttributeSelection -E "weka.attributeSelection.<NEW attribute selection class name> "  -i %s   -S "weka.attributeSelection.Ranker -N <Number of features to be retained>" -o %s"""
+        mode=<Give the name of the algorithm> ## just to facilate redability while printing
+
+After filling the blanks properly [refer weka manual to fill them properly], place it before the else block.
+Note identation matters in python.
+ 
+3. dihong_conv(inpFile) -- deprecated no longer in use. Was used to convert arff files to dihong's compatible file format.
+
+4. test_data_reducer(inpTrain,inpTest):
+
+# input parameter description:
+  inptrain -- training file name that resides in train folder
+  inpTest  -- test file name that resides in test folder
+  Assumption : the train file has been converted to arff file, reduced to k features and the reduced file is placed in processed folder when the function is called. 
+               So when referred to "1.train" it maps to "1.train_reduced.arff" in processed folder.
+  Output : reduces feature space of the inpTest file supplied using the ranking of inptrain file, converts it into arff file and places it in processed_test folder
+           with the name as "1.train_test.arff" if the inpTrain was "1.train"
+
+  #To test it: initialize the run the environment variable section and global variable lis as 
+
+            >>>import os
+            >>>lis=os.listdir(workingDirectory+"train/")
+            >>>lis.sort()
+            
+               Run a feature selection algorithm:
+            >>>select=1  ### set your desired selection algorithm
+            >>>featureSelection(select)
+            
+            >>>lisDotTest=os.listdir(workingDirectory+"test/")
+            >>>lisDotTest.sort()
+            >>> # the lisDotTest contains all the testing samples
+            >>> # Sort is necesary to map train sample correctly to test
+            >>>test_data_reducer(lis[0],lisDotTest[0])
+
+5. Family of classifier functions : 
+   run_classifier_NB(inpFile,counter,direc) 
+   run_classifier_SMO(inpFile,counter,direc)
+   run_classifier_IBk(inpFile,counter,direc,k)
+   run_classifier_J48(inpFile,counter,direc)
+
+#input parameters:
+
+   If inpFile="1.train" it maps to "1.train_reduced.arff" in processed folder and it's corresponding test file in processed_test folder with the name as "1.train_test.arff".
+   counter is used to name the output of the classification result. It also specifies the fold number.
+   direc : specifies where the result has to be placed
+   k for IBk: Specifies k for the kNN algorithm
+  
+   #To test it: initialize the run the environment variable section and global variable lis as 
+
+            >>>import os
+            >>>lis=os.listdir(workingDirectory+"train/")
+            >>>lis.sort()
+            
+               Run a feature selection algorithm:
+            >>>select=1  ### set your desired selection algorithm
+            >>>featureSelection(select)
+            
+            >>>lisDotTest=os.listdir(workingDirectory+"test/")
+            >>>lisDotTest.sort()
+            >>> # the lisDotTest contains all the testing samples
+            >>> # Sort is necesary to map train sample correctly to test
+            >>>test_data_reducer(lis[0],lisDotTest[0])
+            >>>os.makedirs("SU"+"NB")
+            >>>run_classifier_NB(lis[0],1,"SUNB")
+            >>>## the output file "output-1.txt" is placed in "SUNB" folder under parent
+
+
+6. stat(counter,direc):
+
+# given the fold number and output directory this function returns the accuracy of that run by reading the corresponding file.  
+  
+   #To test it: initialize the run the environment variable section and global variable lis as 
+
+            >>>import os
+            >>>lis=os.listdir(workingDirectory+"train/")
+            >>>lis.sort()
+            
+               Run a feature selection algorithm:
+            >>>select=1  ### set your desired selection algorithm
+            >>>featureSelection(select)
+            
+            >>>lisDotTest=os.listdir(workingDirectory+"test/")
+            >>>lisDotTest.sort()
+            >>> # the lisDotTest contains all the testing samples
+            >>> # Sort is necesary to map train sample correctly to test
+            >>>test_data_reducer(lis[0],lisDotTest[0])
+            >>>os.makedirs("SU"+"NB")
+            >>>run_classifier_NB(lis[0],1,"SUNB")
+            >>>## the output file "output-1.txt" is placed in "SUNB" folder under parent
+            >>>stat(1,"SUNB")
+            
+            prints the accuracy of the previous classification result
+
+ 
